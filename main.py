@@ -35,16 +35,20 @@ def get_extra_info(response):
     percentages = []
 
     h2_element = soup.find("h2", string="Languages")
-    div_element = h2_element.parent
-    if div_element:
-        for item in soup.find_all('li', class_='d-inline'):
-            # find the <span> element containing the language and extract the text
-            language_span = item.find('span', class_='color-fg-default text-bold mr-1')
-            if language_span:
-                language = language_span.get_text(strip=True)
-                percentage = language_span.find_next().string
-                languages.append(language)
-                percentages.append(percentage)
+    if h2_element:
+        div_element = h2_element.parent
+        if div_element:
+            for item in soup.find_all('li', class_='d-inline'):
+                # find the <span> element containing the language and extract the text
+                language_span = item.find('span', class_='color-fg-default text-bold mr-1')
+                if language_span:
+                    language = language_span.get_text(strip=True)
+                    percentage = language_span.find_next().string
+                    languages.append(language)
+                    percentages.append(percentage)
+    else:
+        languages = ["None"]
+        percentages = ["0%"]
     return languages, percentages
 
 
