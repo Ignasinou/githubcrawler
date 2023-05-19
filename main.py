@@ -4,9 +4,11 @@ from tqdm import tqdm
 from utils import *
 import logging
 import colorlog
+
 log = logging.getLogger("retrieve_github")
 log.setLevel(logging.DEBUG)
 log_file_name = f"log.txt"
+
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
 fileHandler = logging.FileHandler(log_file_name)
@@ -31,43 +33,40 @@ log.addHandler(fileHandler)
 
 def get_extra_info(response):
     soup = BeautifulSoup(response.content, 'html.parser')
-    languages = []
-    percentages = []
+    languages = ["None"]
+    percentages = ["0%"]
 
     h2_element = soup.find("h2", string="Languages")
     if h2_element:
         div_element = h2_element.parent
         if div_element:
+            languages = []
+            percentages = []
             for item in soup.find_all('li', class_='d-inline'):
                 # find the <span> element containing the language and extract the text
                 language_span = item.find('span', class_='color-fg-default text-bold mr-1')
                 if language_span:
-                    language = language_span.get_text(strip=True)
-                    percentage = language_span.find_next().string
-                    languages.append(language)
-                    percentages.append(percentage)
-    else:
-        languages = ["None"]
-        percentages = ["0%"]
+                    languages.append(language_span.get_text(strip=True))
+                    percentages.append(language_span.find_next().string)
+
     return languages, percentages
 
 
 def search_repo(soup, base_url):
-    urls = []
-    owners = []
+
     repo_list = soup.find("ul", class_="repo-list")
     if repo_list:
+        urls = []
+        owners = []
         repos = repo_list.find_all("li")
         for repo in tqdm(repos, desc="Retrieving repos info"):
             a_tag = repo.find("a")
-            repo_url = base_url + a_tag["href"]
-            owner = a_tag["href"].split('/')[1]
-            owners.append(owner)
-            urls.append(repo_url)
+            owners.append(a_tag["href"].split('/')[1])
+            urls.append(base_url + a_tag["href"])
         return owners, urls
     else:
         log.error(f"Your search did not match any repositories.")
-        raise RuntimeError(f"Your search did not match any repositories.")
+        raise ValueError(f"Your search did not match any repositories.")
 
 
 def search_issues(soup, base_url):
