@@ -4,20 +4,22 @@ import random
 import json
 import os
 import logging
+from urllib.parse import urljoin
 log = logging.getLogger("retrieve_github")
 log.setLevel(logging.DEBUG)
 
 
-def get_proxy_and_response(proxies, url, headers):
-    proxies_temp = copy.deepcopy(proxies)
+def get_proxy_and_response(proxies, url, headers, params):
+    proxies_temp = copy.copy(proxies)
     while proxies_temp:
-        rand_proxy = proxies_temp.pop(0)  # Retrieve and remove the first proxy from the list
+        rand_int = random.randint(0, len(proxies_temp) - 1)
+        rand_proxy = proxies_temp.pop(rand_int)  # Retrieve and remove the first proxy from the list
         proxy = {"https": rand_proxy,
                  "http": rand_proxy
                  }
         try:
             log.info(f"Trying request with the following proxy: {proxy}")
-            response = requests.get(url, proxies=proxy, headers=headers, timeout=5)
+            response = requests.get(url, proxies=proxy, headers=headers, timeout=5, params=params)
             response.raise_for_status()
             log.info(f"Request SUCCESS! {url} {proxy}")
             return response
@@ -30,23 +32,17 @@ def get_proxy_and_response(proxies, url, headers):
         except requests.exceptions.RequestException as err:
             log.error(f"Something went wrong: {err}")
     log.error(f"ERROR: All proxies failed")
-    raise RuntimeError(f"ERROR: All proxies failed")
+    raise ValueError(f"ERROR: All proxies failed")
 
 
 def get_response(type_, query, proxies, headers, base_url):
 
-    if type_.lower() == "repositories":
-        url = f"{base_url}/search?q={query}&type=Repositories"
-    elif type_.lower() == "issues":
-        url = f"{base_url}/search?q={query}&type=Issues"
-    elif type_.lower() == "wikis":
-        url = f"{base_url}/search?q={query}&type=Wikis"
+    if type_.lower() == "repositories" or type_.lower() == "issues" or type_.lower() == "wikis":
+        url = urljoin(base_url, "/search?q=", query)
     else:
         raise ValueError("Invalid object type. Supported types are 'Repositories', 'Issues', and 'Wikis'.")
 
-    # Random as mentioned in the task, should not be random
-    random.shuffle(proxies)  # Shuffle the list of proxies randomly
-    response = get_proxy_and_response(proxies, url, headers)
+    response = get_proxy_and_response(proxies, url, headers, type_.lower())
     return response
 
 

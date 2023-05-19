@@ -1,10 +1,7 @@
 {
   "keywords": [
     "python",
-    "django-rest-framework",
-    "hello",
-    "AI",
-    "no"
+    "django-rest-framework"
   ],
   "proxies": [
     "194.126.37.94:8080",
